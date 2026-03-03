@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:16
+    container_name: shipment_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: shipments
+    ports:
+      - "5433:5432"
+    volumes:
+      - shipment_postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: shipment_api
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://admin:admin@db:5432/shipments
+    ports:
+      - "8000:8000"
+
+volumes:
+  shipment_postgres_data:
