@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
   test:
@@ -27,10 +31,18 @@ jobs:
 
       - name: Run tests
         run: |
-            pytest --cov=app --cov-fail-under=60
+          if [ "$GITHUB_REF_NAME" = "develop" ]; then \
+            pytest --cov=app --cov-fail-under=65; \
+          else \
+            pytest --cov=app --cov-fail-under=60; \
+          fi
 
       - name: Run tests with database
         env:
-            DATABASE_URL: sqlite:///./test.db
+          DATABASE_URL: sqlite:///./test.db
         run: |
-            pytest --cov=app --cov-fail-under=60
+          if [ "$GITHUB_REF_NAME" = "develop" ]; then \
+            pytest --cov=app --cov-fail-under=60; \
+          else \
+            pytest --cov=app --cov-fail-under=85; \
+          fi
