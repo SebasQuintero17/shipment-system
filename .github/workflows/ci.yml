@@ -1,12 +1,9 @@
-name: CI Pipeline
 
-on:
   push:
     branches:
       - main
   pull_request:
 
-jobs:
   test:
     runs-on: ubuntu-latest
 
@@ -34,3 +31,51 @@ jobs:
             DATABASE_URL: sqlite:///./test.db
         run: |
             pytest --cov=app --cov-fail-under=60
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        run: |
+          if [ "$GITHUB_REF_NAME" = "develop" ]; then \
+            pytest --cov=app --cov-fail-under=65; \
+          else \
+            pytest --cov=app --cov-fail-under=60; \
+          fi
+
+      - name: Run tests with database
+        env:
+          DATABASE_URL: sqlite:///./test.db
+        run: |
+          if [ "$GITHUB_REF_NAME" = "develop" ]; then \
+            pytest --cov=app --cov-fail-under=65; \
+          else \
+            pytest --cov=app --cov-fail-under=60; \
+          fi
