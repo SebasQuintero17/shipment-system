@@ -16,55 +16,50 @@ client = TestClient(app)
 # PACKAGES
 # =========================
 
-# def test_create_package():
-#     response = client.post("/packages", json={
-#         "weight": 10,
-#         "description": "Test package",
-#         "status": "pending"
-#     })
-#     assert response.status_code == 200
-#     assert response.json()["weight"] == 10
+def test_create_package():
+     response = client.post("/packages", json={
+         "weight": 10,
+         "description": "Test package",
+         "status": "pending"
+     })
+     assert response.status_code == 200
+     assert response.json()["weight"] == 10
 
 
-# def test_get_packages():
-#     response = client.get("/packages")
-#     assert response.status_code == 200
-#     assert isinstance(response.json(), list)
+def test_get_packages():
+     response = client.get("/packages")
+     assert response.status_code == 200
+     assert isinstance(response.json(), list)
+
+def test_get_package_by_id():
+    response = client.get("/packages/1")
+    assert response.status_code in [200, 404]
+
+def test_update_package():
+    response = client.put("/packages/1", json={
+        "weight": 20,
+        "description": "Updated",
+        "status": "shipped"
+    })
+    assert response.status_code in [200, 404]
+
+def test_delete_package():
+    response = client.delete("/packages/1")
+    assert response.status_code in [200, 404]
 
 
-# def test_get_package_by_id():
-#     response = client.get("/packages/1")
-#     assert response.status_code in [200, 404]
-
-
-# def test_update_package():
-#     response = client.put("/packages/1", json={
-#         "weight": 20,
-#         "description": "Updated",
-#         "status": "shipped"
-#     })
-#     assert response.status_code in [200, 404]
-
-
-# def test_delete_package():
-#     response = client.delete("/packages/1")
-#     assert response.status_code in [200, 404]
-
-
-# # =========================
-# # VEHICLES
-# # =========================
-# def test_create_vehicle():
-#     response = client.post("/vehicles", json={
-#         "plate": "ABC123" + str(random.randint(1, 9999)),
-#         "capacity": 100,
-#         "status": "available"
-#     })
-#     assert response.status_code == 200
-
-# def test_get_vehicles():
-#     response = client.get("/vehicles")
-#     assert response.status_code == 200
+ # VEHICLES
+ # =========================
+def test_create_vehicle():
+     response = client.post("/vehicles", json={
+         "plate": "ABC123" + str(random.randint(1, 9999)),
+         "capacity": 100,
+         "status": "available"
+     })
+     assert response.status_code == 200
+def test_get_vehicles():
+     response = client.get("/vehicles")
+     assert response.status_code == 200
 
 
 # def test_get_vehicle_by_id():
@@ -224,4 +219,4 @@ client = TestClient(app)
      #   "vehicle_id": 9999
     #})
 
-    #assert response.status_code == 400
+    #assert response.status_code == 400 
