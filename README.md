@@ -12,8 +12,8 @@ API RESTful para la gestión de envíos, paquetes y vehículos. Proyecto con int
 
 ## 🚀 Deploy
 
-- **Pruebas:** [URL de pruebas]
-- **Producción:** [URL de producción]
+- **Pruebas:** 
+- **Producción:**(https://shipment-system-71zo.onrender.com/docs)
 
 ## 🛠️ Instalación local
 
@@ -44,6 +44,6 @@ pytest --cov=app
 
 ## 🔑 Variables de entorno
 
-- `DATABASE_URL` (opcional, para producción)
+- `DATABASE_URL` 
 - Por defecto usa SQLite en tests
 
