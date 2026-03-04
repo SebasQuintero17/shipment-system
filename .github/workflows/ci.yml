@@ -42,7 +42,7 @@ jobs:
           DATABASE_URL: sqlite:///./test.db
         run: |
           if [ "$GITHUB_REF_NAME" = "develop" ]; then \
-            pytest --cov=app --cov-fail-under=60; \
+            pytest --cov=app --cov-fail-under=85; \
           else \
             pytest --cov=app --cov-fail-under=85; \
           fi
