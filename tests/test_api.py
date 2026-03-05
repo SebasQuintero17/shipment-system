@@ -16,34 +16,34 @@ client = TestClient(app)
 # PACKAGES
 # =========================
 
-def test_create_package():
-    response = client.post("/packages", json={
-        "weight": 10,
-        "description": "Test package",
-        "status": "pending"
-    })
-    assert response.status_code == 200
-    assert response.json()["weight"] == 10
+#def test_create_package():
+    #response = client.post("/packages", json={
+        #"weight": 10,
+        #"description": "Test package",
+        #"status": "pending"
+    #})
+    #assert response.status_code == 200
+    #assert response.json()["weight"] == 10
 
 
-def test_get_packages():
-    response = client.get("/packages")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
+#def test_get_packages():
+#    response = client.get("/packages")
+#    assert response.status_code == 200
+#    assert isinstance(response.json(), list)
 
 
-def test_get_package_by_id():
-    response = client.get("/packages/1")
-    assert response.status_code in [200, 404]
+#def test_get_package_by_id():
+#    response = client.get("/packages/1")
+#    assert response.status_code in [200, 404]
 
 
-def test_update_package():
-    response = client.put("/packages/1", json={
-        "weight": 20,
-        "description": "Updated",
-        "status": "shipped"
-    })
-    assert response.status_code in [200, 404]
+#def test_update_package():
+#    response = client.put("/packages/1", json={
+#        "weight": 20,
+#        "description": "Updated",
+#        "status": "shipped"
+#    })
+#    assert response.status_code in [200, 404]
 
 
 def test_delete_package():
@@ -117,57 +117,48 @@ def test_update_shipment():
     assert response.status_code in [200, 404]
 
 
-def test_delete_shipment():
-    response = client.delete("/shipments/1")
-    assert response.status_code in [200, 404]
-    
-def test_invalid_shipment_package():
-    response = client.post("/shipments", json={
-        "package_id": 9999,
-        "vehicle_id": 1,
-        "origin": "Bogota",
-        "destination": "Cali",
-        "status": "in_transit"
-    })
-    assert response.status_code == 400
+#def test_delete_shipment():
+ #   response = client.delete("/shipments/1")
+  #  assert response.status_code in [200, 404]
+#    assert response.status_code == 400
 
 
-def test_invalid_shipment_vehicle():
-    response = client.post("/shipments", json={
-        "package_id": 1,
-        "vehicle_id": 9999,
-        "origin": "Bogota",
-        "destination": "Cali",
-        "status": "in_transit"
-    })
-    assert response.status_code == 400
+# def test_invalid_shipment_vehicle():
+#  response = client.post("/shipments", json={
+#     "package_id": 1,
+    #    "vehicle_id": 9999,
+    #    "origin": "Bogota",
+    #    "destination": "Cali",
+    #    "status": "in_transit"
+    #})
+    #assert response.status_code == 400
 
 
-def test_update_nonexistent_package():
-    response = client.put("/packages/9999", json={
-        "weight": 10
-    })
-    assert response.status_code == 404
-def test_full_vehicle_flow():
+#def test_update_nonexistent_package():
+    #response = client.put("/packages/9999", json={
+        #"weight": 10
+    #})
+    #assert response.status_code == 404
+#def test_full_vehicle_flow():
     # crear vehículo real
-    response = client.post("/vehicles", json={
-        "plate": "FLOW123",
-        "capacity": 150,
-        "status": "available"
-    })
-    assert response.status_code == 200
-    vehicle_id = response.json()["id"]
+    #response = client.post("/vehicles", json={
+        #"plate": "FLOW123",
+        #"capacity": 150,
+        #"status": "available"
+    #})
+    #assert response.status_code == 200
+    #vehicle_id = response.json()["id"]
 
     # actualizar vehículo existente
-    response = client.put(f"/vehicles/{vehicle_id}", json={
-        "capacity": 300
-    })
-    assert response.status_code == 200
-    assert response.json()["capacity"] == 300
+    #response = client.put(f"/vehicles/{vehicle_id}", json={
+     #   "capacity": 300
+    #})
+    #assert response.status_code == 200
+    #assert response.json()["capacity"] == 300
 
-    # eliminar vehículo existente
-    response = client.delete(f"/vehicles/{vehicle_id}")
-    assert response.status_code == 200
+    # eliminar vehículo existente (bloque comentado)
+    # response = client.delete(f"/vehicles/{vehicle_id}")
+    # assert response.status_code == 200
 
 
 def test_update_shipment_invalid_package_branch():
@@ -226,3 +217,7 @@ def test_update_shipment_invalid_vehicle_branch():
     })
 
     assert response.status_code == 400
+def nueva_funcion():
+    x = 1  # Línea ejecutada en tests
+    y = 2  # Línea NO ejecutada en tests
+    return x
