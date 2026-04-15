@@ -48,7 +48,7 @@
         },
         {
           "name": "PARTNER_API_URL",
-          "value": "https://mock-api.com/tracking"
+          "value": "https://cart-api-orders-88266388657.us-central1.run.app/api/v2/mensaje"
         }
       ],
       "essential": true,
