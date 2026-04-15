@@ -5,11 +5,19 @@ from . import schemas, crud
 import os
 import httpx
 from fastapi import APIRouter
+from prometheus_fastapi_instrumentator import Instrumentator
+
 # ===============================
 # Crear aplicación
 # ===============================
-app = FastAPI()
-router_v2 = APIRouter(prefix="/api/v2") 
+app = FastAPI(title="Shipment System API", version="1.0.0")
+
+# ===============================
+# Monitoreo - expone /metrics (Prometheus)
+# ===============================
+Instrumentator().instrument(app).expose(app)
+
+router_v2 = APIRouter(prefix="/api/v2")
 # Crear tablas si no existen
 Base.metadata.create_all(bind=engine)
 
@@ -189,6 +197,28 @@ async def process_shipment(shipment_id: int, db: Session = Depends(get_db)):
     enriched_data["tracking"] = tracking_info
 
     return enriched_data
+
+# =====================================================
+# ================= RECEPTOR MULTICLOUD ==============
+# =====================================================
+
+@router_v2.post("/mensaje")
+async def recibir_mensaje(mensaje: dict, db: Session = Depends(get_db)):
+    # Buscar el primer vehículo disponible en BD
+    from . import models
+    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.status == "activo").first()
+    if vehiculo is None:
+        vehiculo = db.query(models.Vehicle).first()
+
+    # Agregar el vehículo al mensaje recibido
+    mensaje["vehicle"] = {
+        "id": vehiculo.id,
+        "plate": vehiculo.plate,
+        "capacity": vehiculo.capacity,
+        "status": vehiculo.status
+    } if vehiculo else {"error": "No hay vehículos disponibles en BD"}
+
+    return mensaje
 
 # Activar el router v2 al final del archivo
 app.include_router(router_v2)
