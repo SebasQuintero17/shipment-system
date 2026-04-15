@@ -1,0 +1,66 @@
+{
+  "family": "shipment-api-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::430695042838:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::430695042838:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "shipment-api",
+      "image": "430695042838.dkr.ecr.us-east-2.amazonaws.com/shipment-api:latest",
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "USE_IAM_AUTH",
+          "value": "true"
+        },
+        {
+          "name": "RDS_HOST",
+          "value": "database-1.cluster-c3omqe20so68.us-east-2.rds.amazonaws.com"
+        },
+        {
+          "name": "RDS_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "RDS_USER",
+          "value": "postgres"
+        },
+        {
+          "name": "RDS_DB",
+          "value": "postgres"
+        },
+        {
+          "name": "RDS_REGION",
+          "value": "us-east-2"
+        },
+        {
+          "name": "PORT",
+          "value": "8000"
+        },
+        {
+          "name": "PARTNER_API_URL",
+          "value": "https://mock-api.com/tracking"
+        }
+      ],
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/shipment-api",
+          "awslogs-region": "us-east-2",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}
