@@ -220,3 +220,33 @@ def test_get_vehicles():
     #})
 
     #assert response.status_code == 400
+
+# =========================
+# ORCHESTRATION / PROCESS
+# =========================
+
+def test_process_shipment_not_found():
+    response = client.get("/api/v2/process/9999")
+    assert response.status_code == 404
+
+def test_process_shipment_success():
+    # First create package
+    pkg = client.post("/api/v2/packages", json={"weight": 10, "description": "p", "status": "pending"}).json()
+    # Create vehicle
+    veh = client.post("/api/v2/vehicles", json={"plate": "PROC123" + str(random.randint(1,999)), "capacity": 100, "status": "available"}).json()
+    # Create shipment
+    sh = client.post("/api/v2/shipments", json={
+        "package_id": pkg["id"],
+        "vehicle_id": veh["id"],
+        "origin": "A",
+        "destination": "B",
+        "status": "pending"
+    }).json()
+
+    # Now call process (which will mock external api because url is fake)
+    response = client.get(f"/api/v2/process/{sh['id']}")
+    assert response.status_code == 200
+    data = response.json()
+    assert "shipment" in data
+    assert "vehicle" in data
+    assert "tracking" in data

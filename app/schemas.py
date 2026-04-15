@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional
-from typing import Optional
 
 class PackageBase(BaseModel):
 	weight: float
@@ -10,13 +9,13 @@ class PackageBase(BaseModel):
 class PackageCreate(PackageBase):
 	pass
 
-class PackageUpdate(BaseModel):
-	weight: float | None = None
-	description: str | None = None
-	status: str | None = None
+
 
 class Package(PackageBase):
 	id: int
+
+	class Config:
+		orm_mode = True
 
 class PackageUpdate(BaseModel):
 	weight: float | None = None

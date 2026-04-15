@@ -2,6 +2,8 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .database import engine, Base, SessionLocal
 from . import schemas, crud
+import os
+import httpx
 from fastapi import APIRouter
 # ===============================
 # Crear aplicación
@@ -133,6 +135,60 @@ def delete_shipment(shipment_id: int, db: Session = Depends(get_db)):
     if shipment is None:
         raise HTTPException(status_code=404, detail="Shipment not found")
     return {"message": "Shipment deleted"}
+
+# =====================================================
+# ===================== PROCESS MULTICLOUD ============
+# =====================================================
+
+@router_v2.get("/process/{shipment_id}")
+async def process_shipment(shipment_id: int, db: Session = Depends(get_db)):
+    db_shipment = crud.get_shipment(db, shipment_id)
+    if db_shipment is None:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+        
+    # Mensaje base enriquecido
+    enriched_data = {
+        "shipment": {
+            "id": db_shipment.id,
+            "origin": db_shipment.origin,
+            "destination": db_shipment.destination,
+            "status": db_shipment.status
+        },
+        "package": {
+            "id": db_shipment.package_id,
+            "weight": db_shipment.package.weight,
+            "description": db_shipment.package.description
+        },
+        "vehicle": {
+            "id": db_shipment.vehicle_id,
+            "plate": db_shipment.vehicle.plate,
+            "capacity": db_shipment.vehicle.capacity
+        }
+    }
+
+    # URL de la API del compañero (AWS o GCP) obtenida desde variables de entorno
+    partner_api_url = os.getenv("PARTNER_API_URL", "https://mock-api.com/tracking")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            # Enviamos el payload enriquecido al compañero para obtener el tracking (timeout 2s)
+            response = await client.post(partner_api_url, json=enriched_data, timeout=2.0)
+            if response.status_code == 200:
+                tracking_info = response.json()
+            else:
+                tracking_info = {"status": "external_error", "message": "API partner retornó error."}
+    except Exception as e:
+        # Si la API del compañero está caída, demostramos resiliencia devolviendo un tracking simulado
+        tracking_info = {
+            "status": "mocked", 
+            "location": "Central Hub",
+            "note": "Aviso: API externa no disponible, datos simulados."
+        }
+
+    # Integramos la tercera parte del payload (orquestación final)
+    enriched_data["tracking"] = tracking_info
+
+    return enriched_data
 
 # Activar el router v2 al final del archivo
 app.include_router(router_v2)
