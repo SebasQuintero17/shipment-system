@@ -1,19 +1,44 @@
 # 🚚 Shipment System
 
-API RESTful para la gestión de envíos, paquetes y vehículos. Proyecto con integración continua, despliegue automatizado y cobertura de tests.
+API RESTful para la gestión de envíos, paquetes y vehículos. Proyecto con integración continua, despliegue automatizado, cobertura de tests y **Arquitectura Multicloud**.
 
 ## 📦 Características
 
-- CRUD de paquetes, vehículos y envíos
-- Base de datos real (PostgreSQL en producción, SQLite en tests)
-- Docker y docker-compose listos
-- Pipelines CI/CD para pruebas y producción
-- Cobertura mínima: 60% (pruebas), 85% (producción)
+- CRUD completo de paquetes, vehículos y envíos.
+- Base de datos real y separada (PostgreSQL en producción en GCP, SQLite en tests).
+- Docker y docker-compose configurados nativamente.
+- Pipelines CI/CD en GitHub Actions para pruebas y pases a producción.
+- **Orquestación Multicloud**: Integración de servicios distribuidos en AWS y GCP enriqueciendo cargas útiles de JSON.
+
+## 🌍 Arquitectura Multicloud y Flujo de Orquestación
+
+Este ecosistema ha evolucionado a una estructura multicloud donde las APIs interactúan y enriquecen mensajes.
+
+```mermaid
+graph TD
+    Client([💻 Cliente]) --> API[🚀 API Principal Shipment (GCP Cloud Run)]
+    API --> DB[(📦 PostgreSQL Cloud SQL)]
+    API -- Enruta Shipment + Vehicle --> AWS[☁️ API Santiago AWS EKS / API Gateway]
+    API -- Enruta Shipment + Vehicle --> GCP[☁️ API Yecid GCP Cloud Run]
+    
+    classDef gcp fill:#E3F2FD,stroke:#1565C0,stroke-width:2px;
+    classDef aws fill:#FFF3E0,stroke:#E65100,stroke-width:2px;
+    
+    class API,DB,GCP gcp;
+    class AWS aws;
+```
+
+### ✅ Proceso de Enriquecimiento (Endpoint `/api/v2/process/{id}`)
+Al llamar este endpoint, no solo se obtiene el recurso, sino que se fabrica un mensaje escalable:
+1. `{"shipment": {...}}` (Extraído de BD).
+2. Se une: `{"shipment": {...}, "vehicle": {...}}` (Agregación interna).
+3. Se consume una API de un compañero en otra nube (AWS/GCP), y se adosa la data externa: 
+`{"shipment": {...}, "vehicle": {...}, "tracking": {...}}`
 
 ## 🚀 Deploy
 
 - **Pruebas:** "https://shipment-system-71zo.onrender.com" 
-- **Producción:** "https://shipment-system-prod.onrender.com"
+- **Producción (GCP):** *Pendiente de URL Cloud Run...*
 
 ## 🛠️ Instalación local
 
@@ -42,15 +67,13 @@ pytest --cov=app
 
 - **develop**: Rama de pruebas. Todo el desarrollo y pruebas se hacen aquí. El pipeline exige cobertura mínima de 65%.
 - **main**: Rama de producción. Solo se actualiza mediante Pull Request desde develop, cuando develop pasa el coverage requerido.
-- Cuando develop supera el coverage, se debe crear un Pull Request manual a main. Solo se permite mergear si el pipeline pasa correctamente.
 
 ## ⚙️ Pipelines CI/CD
 
 - `.github/workflows/ci.yml`: Pruebas automáticas en develop (cobertura ≥ 65%) y main (cobertura ≥ 60%).
-- `.github/workflows/prod.yml`: Deploy a producción, cobertura ≥ 85%.
+- `.github/workflows/prod.yml`: Deploy automatizado a GCP Cloud Run y Artifact Registry.
 
-## 🔑 Variables de entorno
+## 🔑 Variables de entorno principales
 
-- `DATABASE_URL` (opcional, para producción)
-- Por defecto usa SQLite en tests
-
+- `DATABASE_URL`: URI de la base de datos (PostgreSQL en Google Cloud).
+- `PARTNER_API_URL`: (Opcional) URL destino en donde se procesa la orquestación (P. ej., API de Santiago en AWS).
