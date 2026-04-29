@@ -26,3 +26,8 @@ output "vpc_id" {
   description = "ID de la VPC creada"
   value       = module.network.vpc_id
 }
+
+output "bastion_public_ip" {
+  description = "IP publica del Bastion Host para conexion SSH"
+  value       = module.bastion.bastion_public_ip
+}

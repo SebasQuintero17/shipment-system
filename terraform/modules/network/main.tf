@@ -106,6 +106,34 @@ resource "aws_security_group" "api" {
   }
 }
 
+# --- Security Group para Bastion Host ---
+resource "aws_security_group" "bastion" {
+  name        = "${var.project_name}-bastion-sg"
+  description = "Security group para Bastion Host"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Permite SSH desde cualquier lugar"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Permite todo el trafico de salida"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.project_name}-bastion-sg"
+    Environment = var.environment
+  }
+}
+
 # --- Security Group para RDS Aurora ---
 resource "aws_security_group" "rds" {
   name        = "${var.project_name}-rds-sg"
@@ -118,6 +146,14 @@ resource "aws_security_group" "rds" {
     to_port         = 5432
     protocol        = "tcp"
     security_groups = [aws_security_group.api.id]
+  }
+
+  ingress {
+    description     = "Permite conexiones PostgreSQL desde el Bastion"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
   }
 
   egress {

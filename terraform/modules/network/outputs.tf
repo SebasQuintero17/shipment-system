@@ -21,3 +21,8 @@ output "rds_security_group_id" {
   description = "ID del security group de RDS"
   value       = aws_security_group.rds.id
 }
+
+output "bastion_security_group_id" {
+  description = "ID del security group del Bastion"
+  value       = aws_security_group.bastion.id
+}

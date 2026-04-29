@@ -58,3 +58,14 @@ module "compute" {
   container_port  = var.container_port
   partner_api_url = var.partner_api_url
 }
+
+# --- Modulo de Bastion (Servidor de Salto SSH) ---
+module "bastion" {
+  source = "./modules/bastion"
+
+  project_name              = var.project_name
+  environment               = var.environment
+  vpc_id                    = module.network.vpc_id
+  subnet_id                 = module.network.public_subnet_ids[0]
+  bastion_security_group_id = module.network.bastion_security_group_id
+}
