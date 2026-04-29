@@ -1,5 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+from typing import Any
+from fastapi import Body
 from .database import engine, Base, SessionLocal
 from . import schemas, crud
 import os
@@ -174,19 +177,18 @@ async def process_shipment(shipment_id: int, db: Session = Depends(get_db)):
         }
     }
 
-    # URL de la API del compañero (AWS o GCP) obtenida desde variables de entorno
     partner_api_url = os.getenv("PARTNER_API_URL", "https://mock-api.com/tracking")
     
     try:
         async with httpx.AsyncClient() as client:
-            # Enviamos el payload enriquecido al compañero para obtener el tracking (timeout 2s)
+        
             response = await client.post(partner_api_url, json=enriched_data, timeout=2.0)
             if response.status_code == 200:
                 tracking_info = response.json()
             else:
                 tracking_info = {"status": "external_error", "message": "API partner retornó error."}
     except Exception as e:
-        # Si la API del compañero está caída, demostramos resiliencia devolviendo un tracking simulado
+
         tracking_info = {
             "status": "mocked", 
             "location": "Central Hub",
@@ -198,27 +200,61 @@ async def process_shipment(shipment_id: int, db: Session = Depends(get_db)):
 
     return enriched_data
 
-# =====================================================
-# ================= RECEPTOR MULTICLOUD ==============
-# =====================================================
 
 @router_v2.post("/mensaje")
-async def recibir_mensaje(mensaje: dict, db: Session = Depends(get_db)):
-    # Buscar el primer vehículo disponible en BD
+async def recibir_mensaje(req: Any = Body(...), db: Session = Depends(get_db)):
     from . import models
-    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.status == "activo").first()
+    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.status == "available").first()
     if vehiculo is None:
         vehiculo = db.query(models.Vehicle).first()
-
-    # Agregar el vehículo al mensaje recibido
-    mensaje["vehicle"] = {
+    vehiculo_dict = {
         "id": vehiculo.id,
         "plate": vehiculo.plate,
         "capacity": vehiculo.capacity,
         "status": vehiculo.status
-    } if vehiculo else {"error": "No hay vehículos disponibles en BD"}
+    } if vehiculo else None
 
-    return mensaje
+    crud.create_mensaje(db=db, elementos=req if isinstance(req, list) else [req], vehiculo_dict=vehiculo_dict or {})
+
+    return {
+        "mensaje": "Concatenación exitosa",
+        "elementos": req,
+        "vehiculo": vehiculo_dict
+    }
+
+
+@router_v2.get("/mensajes")
+def ver_mensajes(db: Session = Depends(get_db)):
+    return crud.get_mensajes(db)
+
+
+@router_v2.post("/fetch-yecid")
+async def fetch_yecid(db: Session = Depends(get_db)):
+    from . import models
+    yecid_url = "https://cart-api-orders-88266388657.us-central1.run.app/api/v2/mensaje"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(yecid_url, timeout=10.0)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="No se pudo obtener el mensaje de Yecid")
+        data = response.json()
+
+    vehiculo = db.query(models.Vehicle).filter(models.Vehicle.status == "available").first()
+    if vehiculo is None:
+        vehiculo = db.query(models.Vehicle).first()
+    vehiculo_dict = {
+        "id": vehiculo.id,
+        "plate": vehiculo.plate,
+        "capacity": vehiculo.capacity,
+        "status": vehiculo.status
+    } if vehiculo else None
+
+    crud.create_mensaje(db=db, elementos=[data], vehiculo_dict=vehiculo_dict or {})
+
+    return {
+        "mensaje": "Mensaje de Yecid guardado exitosamente",
+        "datos": data,
+        "vehiculo": vehiculo_dict
+    }
 
 # Activar el router v2 al final del archivo
-app.include_router(router_v2)
+app.include_router(router_v2) 
