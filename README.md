@@ -77,3 +77,52 @@ pytest --cov=app
 
 - `DATABASE_URL`: URI de la base de datos (PostgreSQL en Google Cloud).
 - `PARTNER_API_URL`: (Opcional) URL destino en donde se procesa la orquestación (P. ej., API de Santiago en AWS).
+## 🐤 Canary Deployment con Kubernetes (EKS)
+
+### Estrategia de distribución de tráfico
+
+Se implementó un Canary Deployment en AWS EKS (us-east-2) con la siguiente distribución:
+
+- **Stable (v2.0.0):** 3 pods → 75% del tráfico
+- **Canary (v3.0.0-canary):** 1 pod → 25% del tráfico
+
+El tráfico se distribuye automáticamente por Kubernetes según el número de pods. Un solo Service apunta a ambos deployments mediante el label `app: shipment`.
+
+### Arquitectura K8s
+Internet → Ingress (nginx) → Service (shipment-service) → Pods
+├── shipment-stable (x3) → v2.0.0
+└── shipment-canary (x1) → v3.0.0-canary
+
+### URLs para validar en Postman
+
+| Endpoint | URL |
+|----------|-----|
+| HealthCheck (stable/canary) | `http://abc4415fb724c4e158d5517df80d5bdd-9687ce40997cf9f2.elb.us-east-2.amazonaws.com/health` |
+| Root | `http://abc4415fb724c4e158d5517df80d5bdd-9687ce40997cf9f2.elb.us-east-2.amazonaws.com/` |
+| Docs | `http://abc4415fb724c4e158d5517df80d5bdd-9687ce40997cf9f2.elb.us-east-2.amazonaws.com/docs` |
+
+### Cómo verificar la distribución de tráfico
+
+Llama múltiples veces al endpoint `/health` y observa que aproximadamente 1 de cada 4 respuestas retorna `"deployment": "canary"`.
+
+### Monitoreo
+
+La API expone métricas Prometheus en `/metrics`. Para ver la distribución de tráfico en tiempo real:
+
+```bash
+# Ver pods corriendo
+kubectl get pods
+
+# Ver logs del pod canary
+kubectl logs -l version=canary
+
+# Ver logs del pod stable
+kubectl logs -l version=stable
+```
+
+### Imágenes Docker en ECR
+
+| Versión | Imagen |
+|---------|--------|
+| stable | `430695042838.dkr.ecr.us-east-2.amazonaws.com/shipment-api:stable` |
+| canary | `430695042838.dkr.ecr.us-east-2.amazonaws.com/shipment-api:canary` |
