@@ -47,3 +47,4 @@ O manualmente:
 ```bash
 terraform destroy -auto-approve -var="db_password=TuPasswordSeguro123"
 ```
+8

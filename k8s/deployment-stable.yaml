@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipment-stable
+  labels:
+    app: shipment
+    version: stable
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: shipment
+      version: stable
+  template:
+    metadata:
+      labels:
+        app: shipment
+        version: stable
+    spec:
+      containers:
+        - name: shipment-api
+          image: 430695042838.dkr.ecr.us-east-2.amazonaws.com/shipment-api:stable
+          ports:
+            - containerPort: 10000
+          env:
+            - name: PORT
+              value: "10000"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: shipment-secrets
+                  key: database-url
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 10000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 10000
+            initialDelaySeconds: 5
+            periodSeconds: 5

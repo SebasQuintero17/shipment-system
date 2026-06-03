@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import date
-
 from typing import Any
 from fastapi import Body
 from .database import engine, Base, SessionLocal
@@ -11,23 +10,13 @@ import httpx
 from fastapi import APIRouter
 from prometheus_fastapi_instrumentator import Instrumentator
 
-# ===============================
-# Crear aplicación
-# ===============================
-app = FastAPI(title="Shipment System API", version="1.0.0")
+app = FastAPI(title="Shipment System API", version="3.0.0-canary")
 
-# ===============================
-# Monitoreo - expone /metrics (Prometheus)
-# ===============================
 Instrumentator().instrument(app).expose(app)
 
 router_v2 = APIRouter(prefix="/api/v2")
-# Crear tablas si no existen
 Base.metadata.create_all(bind=engine)
 
-# ===============================
-# Dependency para base de datos
-# ===============================
 def get_db():
     db = SessionLocal()
     try:
@@ -35,21 +24,19 @@ def get_db():
     finally:
         db.close()
 
-# ===============================
-# Root
-# ===============================
+@app.get("/")
+def root():
+    return {"message": "Shipment System API running", "version": "3.0.0-canary"}
+
 @app.get("/health")
 def health():
     return {
         "status": "ok",
-        "version": "2.0.0",
-        "deployment": "stable",
-        "deploy_date": str(date.today())
+        "version": "3.0.0-canary",
+        "deployment": "canary",
+        "deploy_date": str(date.today()),
+        "features": ["canary-routing", "enhanced-tracking", "multi-region"]
     }
-
-# =====================================================
-# ===================== PACKAGES ======================
-# =====================================================
 
 @router_v2.post("/packages", response_model=schemas.Package)
 def create_package(package: schemas.PackageCreate, db: Session = Depends(get_db)):
@@ -80,10 +67,6 @@ def delete_package(package_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Package not found")
     return {"message": "Package deleted"}
 
-# =====================================================
-# ===================== VEHICLES ======================
-# =====================================================
-
 @router_v2.post("/vehicles", response_model=schemas.Vehicle)
 def create_vehicle(vehicle: schemas.VehicleCreate, db: Session = Depends(get_db)):
     return crud.create_vehicle(db=db, vehicle=vehicle)
@@ -112,10 +95,6 @@ def delete_vehicle(vehicle_id: int, db: Session = Depends(get_db)):
     if veh is None:
         raise HTTPException(status_code=404, detail="Vehicle not found")
     return {"message": "Vehicle deleted"}
-
-# =====================================================
-# ===================== SHIPMENTS =====================
-# =====================================================
 
 @router_v2.post("/shipments", response_model=schemas.Shipment)
 def create_shipment(shipment: schemas.ShipmentCreate, db: Session = Depends(get_db)):
@@ -153,17 +132,12 @@ def delete_shipment(shipment_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Shipment not found")
     return {"message": "Shipment deleted"}
 
-# =====================================================
-# ===================== PROCESS MULTICLOUD ============
-# =====================================================
-
 @router_v2.get("/process/{shipment_id}")
 async def process_shipment(shipment_id: int, db: Session = Depends(get_db)):
     db_shipment = crud.get_shipment(db, shipment_id)
     if db_shipment is None:
         raise HTTPException(status_code=404, detail="Shipment not found")
-        
-    # Mensaje base enriquecido
+
     enriched_data = {
         "shipment": {
             "id": db_shipment.id,
@@ -180,32 +154,31 @@ async def process_shipment(shipment_id: int, db: Session = Depends(get_db)):
             "id": db_shipment.vehicle_id,
             "plate": db_shipment.vehicle.plate,
             "capacity": db_shipment.vehicle.capacity
+        },
+        "canary_info": {
+            "version": "3.0.0-canary",
+            "enhanced_tracking": True
         }
     }
 
     partner_api_url = os.getenv("PARTNER_API_URL", "https://mock-api.com/tracking")
-    
+
     try:
         async with httpx.AsyncClient() as client:
-        
             response = await client.post(partner_api_url, json=enriched_data, timeout=2.0)
             if response.status_code == 200:
                 tracking_info = response.json()
             else:
                 tracking_info = {"status": "external_error", "message": "API partner retornó error."}
-    except Exception as e:
-
+    except Exception:
         tracking_info = {
-            "status": "mocked", 
+            "status": "mocked",
             "location": "Central Hub",
             "note": "Aviso: API externa no disponible, datos simulados."
         }
 
-    # Integramos la tercera parte del payload (orquestación final)
     enriched_data["tracking"] = tracking_info
-
     return enriched_data
-
 
 @router_v2.post("/mensaje")
 async def recibir_mensaje(req: Any = Body(...), db: Session = Depends(get_db)):
@@ -228,11 +201,9 @@ async def recibir_mensaje(req: Any = Body(...), db: Session = Depends(get_db)):
         "vehiculo": vehiculo_dict
     }
 
-
 @router_v2.get("/mensajes")
 def ver_mensajes(db: Session = Depends(get_db)):
     return crud.get_mensajes(db)
-
 
 @router_v2.post("/fetch-yecid")
 async def fetch_yecid(db: Session = Depends(get_db)):
@@ -262,5 +233,4 @@ async def fetch_yecid(db: Session = Depends(get_db)):
         "vehiculo": vehiculo_dict
     }
 
-# Activar el router v2 al final del archivo
-app.include_router(router_v2) 
+app.include_router(router_v2)
