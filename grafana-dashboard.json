@@ -1,0 +1,115 @@
+{
+  "dashboard": {
+    "title": "Shipment System - Monitoreo",
+    "uid": "shipment-monitor",
+    "timezone": "browser",
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Total de Peticiones por Endpoint",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus" },
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{handler}} {{method}} {{status_code}}"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Errores (4xx y 5xx)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus" },
+            "expr": "rate(http_requests_total{status_code=~\"4..|5..\"}[5m])",
+            "legendFormat": "{{handler}} - {{status_code}}"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Tiempo de Respuesta Promedio (segundos)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus" },
+            "expr": "rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])",
+            "legendFormat": "{{handler}}"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Uso de Memoria RAM",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus" },
+            "expr": "process_resident_memory_bytes",
+            "legendFormat": "RAM usada (bytes)"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Peticiones al endpoint /mensaje",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 0, "y": 16 },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus" },
+            "expr": "sum(http_requests_total{handler=\"/api/v2/mensaje\"})",
+            "legendFormat": "Total mensajes recibidos"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Peticiones Exitosas (2xx)",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 6, "y": 16 },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus" },
+            "expr": "sum(http_requests_total{status_code=~\"2..\"})",
+            "legendFormat": "Exitosas"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Peticiones con Error",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 12, "y": 16 },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus" },
+            "expr": "sum(http_requests_total{status_code=~\"4..|5..\"})",
+            "legendFormat": "Errores"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "CPU usada",
+        "type": "stat",
+        "gridPos": { "h": 4, "w": 6, "x": 18, "y": 16 },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus" },
+            "expr": "rate(process_cpu_seconds_total[5m])",
+            "legendFormat": "CPU"
+          }
+        ]
+      }
+    ]
+  },
+  "overwrite": true
+}

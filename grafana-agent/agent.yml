@@ -1,0 +1,17 @@
+metrics:
+  global:
+    scrape_interval: 15s
+    remote_write:
+      - url: https://prometheus-prod-66-prod-us-east-3.grafana.net/api/prom/push
+        basic_auth:
+          username: "3118896"
+          password: "${GRAFANA_CLOUD_API_TOKEN}"
+
+  configs:
+    - name: shipment-api
+      scrape_configs:
+        - job_name: shipment-api
+          static_configs:
+            - targets:
+                - shipment-alb-468259091.us-east-2.elb.amazonaws.com:80
+          metrics_path: /metrics

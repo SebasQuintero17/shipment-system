@@ -177,3 +177,33 @@ def delete_shipment(db: Session, shipment_id: int):
     db.delete(sh)
     db.commit()
     return sh
+
+
+# =========================
+# MENSAJES
+# =========================
+
+def create_mensaje(db: Session, elementos: list, vehiculo_dict: dict):
+    import json
+    db_mensaje = models.Mensaje(
+        elementos=json.dumps(elementos),
+        vehiculo_asignado=json.dumps(vehiculo_dict)
+    )
+    db.add(db_mensaje)
+    db.commit()
+    db.refresh(db_mensaje)
+    return db_mensaje
+
+
+def get_mensajes(db: Session):
+    import json
+    mensajes = db.query(models.Mensaje).order_by(models.Mensaje.creado_en.desc()).all()
+    result = []
+    for m in mensajes:
+        result.append({
+            "id": m.id,
+            "elementos": json.loads(m.elementos),
+            "vehiculo_asignado": json.loads(m.vehiculo_asignado),
+            "creado_en": m.creado_en
+        })
+    return result

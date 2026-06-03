@@ -1,0 +1,29 @@
+{
+  "family": "grafana-agent-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::430695042838:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "grafana-agent",
+      "image": "430695042838.dkr.ecr.us-east-2.amazonaws.com/grafana-agent:latest",
+      "essential": true,
+      "command": [
+        "--config.file=/etc/agent/agent.yml"
+      ],
+      "environment": [],
+      "secrets": [],
+      "mountPoints": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/grafana-agent",
+          "awslogs-region": "us-east-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

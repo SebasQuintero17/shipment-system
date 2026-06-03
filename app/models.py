@@ -1,5 +1,9 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from typing import Any
+
+from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from .database import Base
 
 class Package(Base):
@@ -32,3 +36,16 @@ class Shipment(Base):
 
     package = relationship("Package")
     vehicle = relationship("Vehicle")
+
+class Mensaje(Base):
+    __tablename__ = "mensajes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    elementos = Column(String)
+    vehiculo_asignado = Column(String)
+    creado_en = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ConcatRequest(BaseModel):
+    lista: list[dict[str, Any]]  # [cuidador, usuario]
+
